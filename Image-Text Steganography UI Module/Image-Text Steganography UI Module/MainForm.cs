@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Design;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -65,6 +66,7 @@ namespace Image_Text_Steganography_UI_Module
 
         }
 
+       
         private void encryptionBtn_Click(object sender, EventArgs e)
         {
             StreamWriter writer = new StreamWriter(OutputEncryptionImagePath);
@@ -74,7 +76,8 @@ namespace Image_Text_Steganography_UI_Module
                 for (int j = 0; j < inputEncryptionBitmap.Height; j++)
                 {
                     var pixel = inputEncryptionBitmap.GetPixel(i, j);
-                    writer.Write($"{pixel.R},{pixel.G},{pixel.B};");
+
+                    writer.Write($"{pixel.R:000},{pixel.G:000},{pixel.B:000};");
                     
                 }
                 writer.Write("\n");

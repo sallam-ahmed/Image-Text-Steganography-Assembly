@@ -1,8 +1,14 @@
-Microsoft (R) Macro Assembler Version 14.00.23026.0	    12/24/16 14:42:01
+Microsoft (R) Macro Assembler Version 14.00.23026.0	    12/24/16 18:34:17
 EntryPoint.asm						     Page 1 - 1
 
 
-				; embeding a char inside 3 pixels.adjusting only the first bit of every color
+				;===================================== Image/Text Steganography ===============================
+				;===============Authors===============:
+				;
+				;
+				;
+				;
+
 				INCLUDE Irvine32.inc
 			      C ; Include file for Irvine32.lib             (Irvine32.inc)
 			      C 
@@ -30,8 +36,8 @@ EntryPoint.asm						     Page 1 - 1
 	   05 06 07
  = 000000FE			andConst EQU 11111110b
  = 00000001			orConst EQU 00000001b
+
 				;#region FileRead Data
-					
  = 00001388				BUFFER_SIZE EQU 5000
 
  00000008 45 3A 5C 69 6E		FilePath BYTE "E:\input.txt",0
@@ -49,7 +55,16 @@ EntryPoint.asm						     Page 1 - 1
 	   69 6E 70 75 74
 	   20 66 69 6C 65
 	   2E 2E 2E 00
+
+ 000013C3 00				FileLength BYTE ?
 				;#endregion
+
+ 000013C4 45 6E 63 6F 64		MSG BYTE "Encode Me Please",0
+	   65 20 4D 65 20
+	   50 6C 65 61 73
+	   65 00
+
+ 000013D5 00				COUN BYTE ?
  00000000			.code
 				;=========================Encode Character Procedure =========================
 				; EDX Contains offset of colors 8 count array
@@ -98,72 +113,73 @@ EntryPoint.asm						     Page 1 - 1
 				;
 				;EDX = OFFSET pixelsArray
 				;
-				;
- 00000028			Decode_Char PROC USES ECX ESI EBX EAX EDX
+				;EAX = Decoded Character
+ 00000028			Decode_Char PROC USES ECX ESI EAX EDX
  00000028  51		   *	    push   ecx
  00000029  56		   *	    push   esi
- 0000002A  53		   *	    push   ebx
- 0000002B  50		   *	    push   eax
- 0000002C  52		   *	    push   edx
- 0000002D  B9 00000008			MOV ECX, 8
- 00000032  BE 00000000 R		MOV ESI,OFFSET colors
- 00000037  B8 00000000			MOV EAX,0
- 0000003C			@decBegin:
- 0000003C  80 26 01			AND BYTE PTR [ESI], 00000001b
- 0000003F  02 06			ADD AL, BYTE PTR[ESI]
- 00000041  83 F9 01			CMP ECX,1
- 00000044  74 03			JE @decIgnore
- 00000046			@decShift:
- 00000046  D0 E0			SHL AL,1
- 00000048  46				INC ESI
- 00000049			@decIgnore:
- 00000049  E2 F1			LOOP @decBegin
- 0000004B  E8 00000000 E		CALL WriteChar
+ 0000002A  50		   *	    push   eax
+ 0000002B  52		   *	    push   edx
+ 0000002C  B9 00000008			MOV ECX, 8
+ 00000031  8B F2			MOV ESI,EDX
+ 00000033  B8 00000000			MOV EAX,0
+ 00000038			@decBegin:
+ 00000038  80 26 01			AND BYTE PTR [ESI], 00000001b
+ 0000003B  02 06			ADD AL, BYTE PTR[ESI]
+ 0000003D  83 F9 01			CMP ECX,1
+ 00000040  74 03			JE @decIgnore
+ 00000042			@decShift:
+ 00000042  D0 E0			SHL AL,1
+ 00000044  46				INC ESI
+ 00000045			@decIgnore:
+ 00000045  E2 F1			LOOP @decBegin
+ 00000047  E8 00000000 E		CALL WriteChar
 				RET
- 00000050  5A		   *	    pop    edx
- 00000051  58		   *	    pop    eax
- 00000052  5B		   *	    pop    ebx
- 00000053  5E		   *	    pop    esi
- 00000054  59		   *	    pop    ecx
- 00000055  C3		   *	    ret    00000h
- 00000056			Decode_Char ENDP
- 00000056			OpenFileForReading PROC USES EDX ECX EAX
+ 0000004C  5A		   *	    pop    edx
+ 0000004D  58		   *	    pop    eax
+ 0000004E  5E		   *	    pop    esi
+ 0000004F  59		   *	    pop    ecx
+ 00000050  C3		   *	    ret    00000h
+ 00000051			Decode_Char ENDP
+				;============================ Load File Data ===================================
+				;Loads file content from disk
+				;===============================================================================
+ 00000051			LoadFileData PROC USES EDX ECX EAX
 					
- 00000056  52		   *	    push   edx
- 00000057  51		   *	    push   ecx
- 00000058  50		   *	    push   eax
- 00000059  BA 00000008 R		MOV EDX,OFFSET FilePath
- 0000005E  B9 0000000D			MOV ECX, LENGTHOF FilePath
+ 00000051  52		   *	    push   edx
+ 00000052  51		   *	    push   ecx
+ 00000053  50		   *	    push   eax
+ 00000054  BA 00000008 R		MOV EDX,OFFSET FilePath
+ 00000059  B9 0000000D			MOV ECX, LENGTHOF FilePath
 					
- 00000063  E8 00000000 E		CALL OpenInputFile
+ 0000005E  E8 00000000 E		CALL OpenInputFile
 
- 00000068  A3 00000015 R		MOV FileHandler, EAX
- 0000006D  83 F8 FF			CMP EAX, INVALID_HANDLE_VALUE
- 00000070  74 58			JE @INVALID_FILE
- 00000072  BA 00000019 R		MOV EDX, OFFSET INPUT_BUFFER
- 00000077  B9 00001388			MOV ECX, BUFFER_SIZE
- 0000007C  E8 00000000 E		CALL ReadFromFile
- 00000081  73 13			JNC @CHECK_BUFFER_SIZE; error reading ?
+ 00000063  A3 00000015 R		MOV FileHandler, EAX
+ 00000068  83 F8 FF			CMP EAX, INVALID_HANDLE_VALUE
+ 0000006B  74 58			JE @INVALID_FILE
+ 0000006D  BA 00000019 R		MOV EDX, OFFSET INPUT_BUFFER
+ 00000072  B9 00001388			MOV ECX, BUFFER_SIZE
+ 00000077  E8 00000000 E		CALL ReadFromFile
+ 0000007C  73 13			JNC @CHECK_BUFFER_SIZE; error reading ?
 					mWrite "Error reading file. "; yes: show error message
- 000013C3		     1		.data		
- 000013C3 45 72 72 6F 72     1		??0000 BYTE "Error reading file. ",0	
+ 000013D6		     1		.data		
+ 000013D6 45 72 72 6F 72     1		??0000 BYTE "Error reading file. ",0	
 	   20 72 65 61 64
 	   69 6E 67 20 66
 	   69 6C 65 2E 20
 	   00
- 00000083		     1		.code
- 00000083  52		     1		push	edx
- 00000084  BA 000013C3 R     1		mov	edx,OFFSET ??0000
- 00000089  E8 00000000 E     1		call	WriteString
- 0000008E  5A		     1		pop	edx
- 0000008F  E8 00000000 E		CALL WriteWindowsMsg
- 00000094  EB 52			JMP @TERMINATE
- 00000096			@CHECK_BUFFER_SIZE:
- 00000096  3D 00001388			CMP EAX, BUFFER_SIZE; buffer large enough ?
- 0000009B  72 0E			JB @OK_BUF_SIZE; yes
+ 0000007E		     1		.code
+ 0000007E  52		     1		push	edx
+ 0000007F  BA 000013D6 R     1		mov	edx,OFFSET ??0000
+ 00000084  E8 00000000 E     1		call	WriteString
+ 00000089  5A		     1		pop	edx
+ 0000008A  E8 00000000 E		CALL WriteWindowsMsg
+ 0000008F  EB 39			JMP @TERMINATE
+ 00000091			@CHECK_BUFFER_SIZE:
+ 00000091  3D 00001388			CMP EAX, BUFFER_SIZE; buffer large enough ?
+ 00000096  72 0E			JB @OK_BUF_SIZE; yes
 					mWrite <"Error: Buffer too small for the file", 0dh, 0ah>
- 000013D8		     1		.data		
- 000013D8 45 72 72 6F 72     1		??0001 BYTE "Error: Buffer too small for the file", 0dh, 0ah,0	
+ 000013EB		     1		.data		
+ 000013EB 45 72 72 6F 72     1		??0001 BYTE "Error: Buffer too small for the file", 0dh, 0ah,0	
 	   3A 20 42 75 66
 	   66 65 72 20 74
 	   6F 6F 20 73 6D
@@ -171,77 +187,194 @@ EntryPoint.asm						     Page 1 - 1
 	   6F 72 20 74 68
 	   65 20 66 69 6C
 	   65 0D 0A 00
- 0000009D		     1		.code
- 0000009D  52		     1		push	edx
- 0000009E  BA 000013D8 R     1		mov	edx,OFFSET ??0001
- 000000A3  E8 00000000 E     1		call	WriteString
- 000000A8  5A		     1		pop	edx
- 000000A9  EB 3D			JMP @TERMINATE; and quit
- 000000AB			@OK_BUF_SIZE:
- 000000AB  C6 80 00000019 R		MOV INPUT_BUFFER[EAX], 0; insert null terminator
+ 00000098		     1		.code
+ 00000098  52		     1		push	edx
+ 00000099  BA 000013EB R     1		mov	edx,OFFSET ??0001
+ 0000009E  E8 00000000 E     1		call	WriteString
+ 000000A3  5A		     1		pop	edx
+ 000000A4  EB 24			JMP @TERMINATE; and quit
+ 000000A6			@OK_BUF_SIZE:
+ 000000A6  C6 80 00000019 R		MOV INPUT_BUFFER[EAX], 0; insert null terminator
 	   00
 					mWrite "File size: "
- 000013FF		     1		.data		
- 000013FF 46 69 6C 65 20     1		??0002 BYTE "File size: ",0	
+ 00001412		     1		.data		
+ 00001412 46 69 6C 65 20     1		??0002 BYTE "File size: ",0	
 	   73 69 7A 65 3A
 	   20 00
- 000000B2		     1		.code
- 000000B2  52		     1		push	edx
- 000000B3  BA 000013FF R     1		mov	edx,OFFSET ??0002
- 000000B8  E8 00000000 E     1		call	WriteString
- 000000BD  5A		     1		pop	edx
- 000000BE  E8 00000000 E		CALL WriteDec; display file size
- 000000C3  E8 00000000 E		CALL Crlf
- 000000C8  EB 14			JMP @READ_FINAL
- 000000CA			@INVALID_FILE:
- 000000CA  BA 000013A1 R		MOV EDX, OFFSET INVALIDE_HANDLER_MESSAGE
- 000000CF  E8 00000000 E		CALL WriteString
- 000000D4  E8 00000000 E		CALL Crlf
- 000000D9  E8 00000000 E		CALL WaitMsg
- 000000DE			@READ_FINAL:
- 000000DE  BA 00000019 R		MOV EDX,OFFSET INPUT_BUFFER
- 000000E3  E8 00000000 E		CALL WriteString
- 000000E8			@TERMINATE:
+ 000000AD		     1		.code
+ 000000AD  52		     1		push	edx
+ 000000AE  BA 00001412 R     1		mov	edx,OFFSET ??0002
+ 000000B3  E8 00000000 E     1		call	WriteString
+ 000000B8  5A		     1		pop	edx
+ 000000B9  A2 000013C3 R		MOV FileLength, AL
+					;CALL WriteDec; display file size
+ 000000BE  E8 00000000 E		CALL Crlf
+ 000000C3  EB 05			JMP @READ_FINAL
+ 000000C5			@INVALID_FILE:
+ 000000C5  BA 000013A1 R		MOV EDX, OFFSET INVALIDE_HANDLER_MESSAGE
+					;CALL WriteString
+					;CALL Crlf
+					;CALL WaitMsg
+ 000000CA			@READ_FINAL:
+					;MOV EDX,OFFSET INPUT_BUFFER
+					;CALL WriteString
+ 000000CA			@TERMINATE:
 					RET
- 000000E8  58		   *	    pop    eax
- 000000E9  59		   *	    pop    ecx
- 000000EA  5A		   *	    pop    edx
- 000000EB  C3		   *	    ret    00000h
- 000000EC			OpenFileForReading ENDP
- 000000EC			main PROC
+ 000000CA  58		   *	    pop    eax
+ 000000CB  59		   *	    pop    ecx
+ 000000CC  5A		   *	    pop    edx
+ 000000CD  C3		   *	    ret    00000h
+ 000000CE			LoadFileData ENDP
+				;================================= Read Color Value =========================
+				;Recieves: ESI contains offset of Input Buffer
+				;Reads 3 characters and convert them to a number
+				;Returns: EAX contains the number from string value
+ 000000CE			ReadColorValue PROC USES EDX ECX EBX
+ 000000CE  52		   *	    push   edx
+ 000000CF  51		   *	    push   ecx
+ 000000D0  53		   *	    push   ebx
+ 000000D1  4E				DEC ESI
+ 000000D2  B9 00000003			MOV ECX, 3
+ 000000D7  C6 05 000013D5 R		MOV COUN, 0
+	   00
+ 000000DE  BA 00000064			MOV EDX, 100
+ 000000E3  FC				CLD
+ 000000E4  B8 00000000			MOV EAX,0
+					;SUB EAX,48
+ 000000E9			@ReadNum:
+ 000000E9  50				PUSH EAX
+ 000000EA  AC				LODSB
+ 000000EB  83 E8 30			SUB EAX,48	
+ 000000EE  FE 05 000013D5 R		INC COUN
+ 000000F4  5B				POP EBX
+ 000000F5  52				PUSH EDX
+ 000000F6  F7 E2			MUL EDX
+ 000000F8  5A				POP EDX
+ 000000F9  03 C3			ADD EAX,EBX
+					;Div EDX by 10
+ 000000FB  50				PUSH EAX
+ 000000FC  8B C2			MOV EAX,EDX
+ 000000FE  BA 00000000			MOV EDX,0
+ 00000103  BB 0000000A			MOV EBX,10
+ 00000108  F7 F3			DIV EBX
+ 0000010A  8B D0			MOV EDX,EAX
+ 0000010C  58				POP EAX
+ 0000010D  E2 DA			LOOP @ReadNum
+					;EAX Holds Value
+					RET
+ 0000010F  5B		   *	    pop    ebx
+ 00000110  59		   *	    pop    ecx
+ 00000111  5A		   *	    pop    edx
+ 00000112  C3		   *	    ret    00000h
+ 00000113			ReadColorValue ENDP
+				;=============================== Read File Pixel =============================
+ 00000113			ReadPixelValue PROC
 
-					;CALL OpenFileForReading
+ 00000113  BE 00000019 R		MOV ESI,OFFSET INPUT_BUFFER
+
+ 00000118  0F B6 0D			MOVZX ECX, FileLength
+	   000013C3 R
+ 0000011F  B8 00000000			MOV EAX, 0
+ 00000124  FC				CLD
+ 00000125			@ReadPixel:
+ 00000125  AC				LODSB
+					.if AL == ","
+ 00000126  3C 2C	   *	    cmp    al, ','
+ 00000128  75 07	   *	    jne    @C0001
+ 0000012A  E8 00000000 E		CALL Crlf
+					.ELSEIF AL == ";"
+ 0000012F  EB 37	   *	    jmp    @C0003
+ 00000131		   *@C0001:
+ 00000131  3C 3B	   *	    cmp    al, ';'
+ 00000133  75 0C	   *	    jne    @C0004
+ 00000135  E8 00000000 E		CALL Crlf
+ 0000013A  E8 00000000 E		CALL Crlf
+					.ELSEIF AL == "#"
+ 0000013F  EB 27	   *	    jmp    @C0006
+ 00000141		   *@C0004:
+ 00000141  3C 23	   *	    cmp    al, '#'
+ 00000143  75 11	   *	    jne    @C0007
+ 00000145  E8 00000000 E		CALL Crlf
+ 0000014A  E8 00000000 E		CALL Crlf
+ 0000014F  E8 00000000 E		CALL Crlf
+					.ELSE
+ 00000154  EB 12	   *	    jmp    @C0009
+ 00000156		   *@C0007:
+ 00000156  E8 FFFFFF73			CALL ReadColorValue
+ 0000015B  83 E9 03			SUB ECX,3
+ 0000015E  E8 00000000 E		CALL WriteDec
+ 00000163  83 F9 00			CMP ECX, 0
+ 00000166  7E 02			JLE @Finish
+					.ENDIF
+ 00000168		   *@C0009:
+ 00000168		   *@C0006:
+ 00000168		   *@C0003:
+
+ 00000168  E2 BB			LOOP @ReadPixel
+ 0000016A			@Finish:
+ 0000016A  C3			RET
+ 0000016B			ReadPixelValue ENDP
+ 0000016B			main PROC
+
+ 0000016B  E8 FFFFFEE1			CALL LoadFileData
+ 00000170  E8 00000000 E		CALL WaitMsg
+ 00000175  E8 00000000 E		CALL WaitMsg
+ 0000017A  E8 00000000 E		CALL Crlf
+ 0000017F  E8 FFFFFF8F			CALL ReadPixelValue
 
 				;#region Encode Testing
-				;COMMENT @
- 000000EC  B3 62		MOV BL, 'b'
- 000000EE  BA 00000000 R	MOV EDX, OFFSET colors
- 000000F3  E8 FFFFFF08		CALL Encode_Char
+				COMMENT @
+				MOV BL, 'b'
+				MOV EDX, OFFSET colors
+				CALL Encode_Char
 
- 000000F8  B9 00000008		mov ecx, 8
- 000000FD  BE 00000000 R	mov ESI, offset colors
- 00000102			l2:
- 00000102  B8 00000000		mov eax, 0
- 00000107  8A 06		MOV al, [ESI]
- 00000109  E8 00000000 E	call WriteDec
+				mov ecx, 8
+				mov ESI, offset colors
+				l2:
+				mov eax, 0
+				MOV al, [ESI]
+				call WriteDec
 
- 0000010E  B0 20		mov al, ' '
- 00000110  E8 00000000 E	call WriteChar
- 00000115  46			INC ESI
- 00000116  E2 EA		loop l2
-				;@
+				mov al, ' '
+				call WriteChar
+				INC ESI
+				loop l2
+
 				;#endregion
- 00000118  E8 00000000 E	call WaitMsg
- 0000011D  E8 00000000 E	CALL Crlf
- 00000122  E8 FFFFFF01		CALL Decode_Char
- 00000127  E8 00000000 E	CALL Crlf
- 0000012C  E8 00000000 E	CALL WaitMsg
+				call WaitMsg
+				CALL Crlf
+				CALL Decode_Char
+				CALL Crlf
+				@
+ 00000184  E8 00000000 E	CALL WaitMsg
 				exit
- 00000131  6A 00	   *	    push   +000000000h
- 00000133  E8 00000000 E   *	    call   ExitProcess
- 00000138			main ENDP
+ 00000189  6A 00	   *	    push   +000000000h
+ 0000018B  E8 00000000 E   *	    call   ExitProcess
+ 00000190			main ENDP
 				END main
-Microsoft (R) Macro Assembler Version 14.00.23026.0	    12/24/16 14:42:01
+
+				COMMENT @DLL Setup
+
+				DecodeTextMessage PROC imgeData:BYTE
+
+
+				RET
+				DecodeTextMessage ENDP
+
+				EncodeTextMessage PROC msg:BYTE, imgData:BYTE
+					
+
+
+					RET
+				EncodeTextMessage ENDP
+
+				DllMain PROC hInstance:DWORD, fdwReason:DWORD, lpReserved:DWORD
+				mov eax, 1 ; Return true to caller.
+				ret
+				DllMain ENDP
+				END DllMain
+@
+Microsoft (R) Macro Assembler Version 14.00.23026.0	    12/24/16 18:34:17
 EntryPoint.asm						     Symbols 2 - 1
 
 
@@ -353,8 +486,8 @@ Segments and Groups:
 
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
-_DATA  . . . . . . . . . . . . .	32 Bit	 0000140B Para	  Public  'DATA'	
-_TEXT  . . . . . . . . . . . . .	32 Bit	 00000138 Para	  Public  'CODE'	
+_DATA  . . . . . . . . . . . . .	32 Bit	 0000141E Para	  Public  'DATA'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 00000190 Para	  Public  'CODE'	
 
 
 Procedures, parameters, and locals:
@@ -367,10 +500,10 @@ Clrscr . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 CreateFileA  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 CreateOutputFile . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 Crlf . . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-Decode_Char  . . . . . . . . . .	P Near	 00000028 _TEXT	Length= 0000002E Public STDCALL
-  @decBegin  . . . . . . . . . .	L Near	 0000003C _TEXT	
-  @decShift  . . . . . . . . . .	L Near	 00000046 _TEXT	
-  @decIgnore . . . . . . . . . .	L Near	 00000049 _TEXT	
+Decode_Char  . . . . . . . . . .	P Near	 00000028 _TEXT	Length= 00000029 Public STDCALL
+  @decBegin  . . . . . . . . . .	L Near	 00000038 _TEXT	
+  @decShift  . . . . . . . . . .	L Near	 00000042 _TEXT	
+  @decIgnore . . . . . . . . . .	L Near	 00000045 _TEXT	
 Delay  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 DumpMem  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 DumpRegs . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -409,16 +542,16 @@ HeapDestroy  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 HeapFree . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 HeapSize . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 IsDigit  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+LoadFileData . . . . . . . . . .	P Near	 00000051 _TEXT	Length= 0000007D Public STDCALL
+  @CHECK_BUFFER_SIZE . . . . . .	L Near	 00000091 _TEXT	
+  @OK_BUF_SIZE . . . . . . . . .	L Near	 000000A6 _TEXT	
+  @INVALID_FILE  . . . . . . . .	L Near	 000000C5 _TEXT	
+  @READ_FINAL  . . . . . . . . .	L Near	 000000CA _TEXT	
+  @TERMINATE . . . . . . . . . .	L Near	 000000CA _TEXT	
 LocalFree  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 MessageBoxA  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 MsgBoxAsk  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 MsgBox . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-OpenFileForReading . . . . . . .	P Near	 00000056 _TEXT	Length= 00000096 Public STDCALL
-  @CHECK_BUFFER_SIZE . . . . . .	L Near	 00000096 _TEXT	
-  @OK_BUF_SIZE . . . . . . . . .	L Near	 000000AB _TEXT	
-  @INVALID_FILE  . . . . . . . .	L Near	 000000CA _TEXT	
-  @READ_FINAL  . . . . . . . . .	L Near	 000000DE _TEXT	
-  @TERMINATE . . . . . . . . . .	L Near	 000000E8 _TEXT	
 OpenInputFile  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 ParseDecimal32 . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 ParseInteger32 . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -427,6 +560,8 @@ Random32 . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 RandomRange  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 Randomize  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 ReadChar . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ReadColorValue . . . . . . . . .	P Near	 000000CE _TEXT	Length= 00000045 Public STDCALL
+  @ReadNum . . . . . . . . . . .	L Near	 000000E9 _TEXT	
 ReadConsoleA . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 ReadConsoleInputA  . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 ReadDec  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -437,6 +572,9 @@ ReadHex  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 ReadInt  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 ReadKeyFlush . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 ReadKey  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+ReadPixelValue . . . . . . . . .	P Near	 00000113 _TEXT	Length= 00000058 Public STDCALL
+  @ReadPixel . . . . . . . . . .	L Near	 00000125 _TEXT	
+  @Finish  . . . . . . . . . . .	L Near	 0000016A _TEXT	
 ReadString . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 SetConsoleCursorInfo . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 SetConsoleCursorPosition . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -475,8 +613,7 @@ WriteStackFrame  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 WriteString  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteToFile  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteWindowsMsg  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-main . . . . . . . . . . . . . .	P Near	 000000EC _TEXT	Length= 0000004C Public STDCALL
-  l2 . . . . . . . . . . . . . .	L Near	 00000102 _TEXT	
+main . . . . . . . . . . . . . .	P Near	 0000016B _TEXT	Length= 00000025 Public STDCALL
 printf . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 scanf  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 wsprintfA  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
@@ -486,9 +623,9 @@ Symbols:
 
                 N a m e                 Type     Value    Attr
 
-??0000 . . . . . . . . . . . . .	Byte	 000013C3 _DATA	
-??0001 . . . . . . . . . . . . .	Byte	 000013D8 _DATA	
-??0002 . . . . . . . . . . . . .	Byte	 000013FF _DATA	
+??0000 . . . . . . . . . . . . .	Byte	 000013D6 _DATA	
+??0001 . . . . . . . . . . . . .	Byte	 000013EB _DATA	
+??0002 . . . . . . . . . . . . .	Byte	 00001412 _DATA	
 @CodeSize  . . . . . . . . . . .	Number	 00000000h   
 @DataSize  . . . . . . . . . . .	Number	 00000000h   
 @Interface . . . . . . . . . . .	Number	 00000003h   
@@ -501,6 +638,7 @@ Symbols:
 ALT_MASK . . . . . . . . . . . .	Number	 00000003h   
 BUFFER_SIZE  . . . . . . . . . .	Number	 00001388h   
 CAPSLOCK_ON  . . . . . . . . . .	Number	 00000080h   
+COUN . . . . . . . . . . . . . .	Byte	 000013D5 _DATA	
 CREATE_ALWAYS  . . . . . . . . .	Number	 00000002h   
 CREATE_NEW . . . . . . . . . . .	Number	 00000001h   
 CTRL_MASK  . . . . . . . . . . .	Number	 0000000Ch   
@@ -543,6 +681,7 @@ FOCUS_EVENT  . . . . . . . . . .	Number	 00000010h
 FORMAT_MESSAGE_ALLOCATE_BUFFER .	Number	 00000100h   
 FORMAT_MESSAGE_FROM_SYSTEM . . .	Number	 00001000h   
 FileHandler  . . . . . . . . . .	DWord	 00000015 _DATA	
+FileLength . . . . . . . . . . .	Byte	 000013C3 _DATA	
 FilePath . . . . . . . . . . . .	Byte	 00000008 _DATA	
 FormatMessage  . . . . . . . . .	Text   	 FormatMessageA
 GENERIC_ALL  . . . . . . . . . .	Number	 10000000h   
@@ -602,6 +741,7 @@ MB_YESNOCANCEL . . . . . . . . .	Number	 00000003h
 MB_YESNO . . . . . . . . . . . .	Number	 00000004h   
 MENU_EVENT . . . . . . . . . . .	Number	 00000008h   
 MOUSE_EVENT  . . . . . . . . . .	Number	 00000002h   
+MSG  . . . . . . . . . . . . . .	Byte	 000013C4 _DATA	
 MessageBox . . . . . . . . . . .	Text   	 MessageBoxA
 NULL . . . . . . . . . . . . . .	Number	 00000000h   
 NUMLOCK_ON . . . . . . . . . . .	Number	 00000020h   

@@ -1,4 +1,10 @@
-; embeding a char inside 3 pixels.adjusting only the first bit of every color
+;===================================== Image/Text Steganography ===============================
+;===============Authors===============:
+;
+;
+;
+;
+
 INCLUDE Irvine32.inc
 INCLUDE Macros.inc
 .data
@@ -14,10 +20,13 @@ orConst EQU 00000001b
 	INPUT_BUFFER BYTE BUFFER_SIZE DUP(?)
 
 	INVALIDE_HANDLER_MESSAGE BYTE "Invalid Handler for input file...",0
+
+	FileLength BYTE ?
 ;#endregion
 
+	MSG BYTE "Encode Me Please",0
 
-
+	COUN BYTE ?
 .code
 ;=========================Encode Character Procedure =========================
 ; EDX Contains offset of colors 8 count array
@@ -73,8 +82,10 @@ Decode_Char PROC USES ECX ESI EAX EDX
 	CALL WriteChar
 RET
 Decode_Char ENDP
-
-OpenFileForReading PROC USES EDX ECX EAX
+;============================ Load File Data ===================================
+;Loads file content from disk
+;===============================================================================
+LoadFileData PROC USES EDX ECX EAX
 	
 	MOV EDX,OFFSET FilePath
 	MOV ECX, LENGTHOF FilePath
@@ -99,27 +110,95 @@ OpenFileForReading PROC USES EDX ECX EAX
 @OK_BUF_SIZE:
 	MOV INPUT_BUFFER[EAX], 0; insert null terminator
 	mWrite "File size: "
-	CALL WriteDec; display file size
+	MOV FileLength, AL
+	;CALL WriteDec; display file size
 	CALL Crlf
 	JMP @READ_FINAL
 @INVALID_FILE:
 	MOV EDX, OFFSET INVALIDE_HANDLER_MESSAGE
-	CALL WriteString
-	CALL Crlf
-	CALL WaitMsg
+	;CALL WriteString
+	;CALL Crlf
+	;CALL WaitMsg
 @READ_FINAL:
-	MOV EDX,OFFSET INPUT_BUFFER
-	CALL WriteString
+	;MOV EDX,OFFSET INPUT_BUFFER
+	;CALL WriteString
 @TERMINATE:
 	RET
-OpenFileForReading ENDP
+LoadFileData ENDP
+;================================= Read Color Value =========================
+;Recieves: ESI contains offset of Input Buffer
+;Reads 3 characters and convert them to a number
+;Returns: EAX contains the number from string value
+ReadColorValue PROC USES EDX ECX EBX
+	DEC ESI
+	MOV ECX, 3
+	MOV COUN, 0
+	MOV EDX, 100
+	CLD
+	MOV EAX,0
+	;SUB EAX,48
+@ReadNum:
+	PUSH EAX
+	LODSB
+	SUB EAX,48	
+	INC COUN
+	POP EBX
+	PUSH EDX
+	MUL EDX
+	POP EDX
+	ADD EAX,EBX
+	;Div EDX by 10
+	PUSH EAX
+	MOV EAX,EDX
+	MOV EDX,0
+	MOV EBX,10
+	DIV EBX
+	MOV EDX,EAX
+	POP EAX
+	LOOP @ReadNum
+	;EAX Holds Value
+	RET
+ReadColorValue ENDP
+;=============================== Read File Pixel =============================
+ReadPixelValue PROC
+	MOV ESI,OFFSET INPUT_BUFFER
+	MOVZX ECX, FileLength
+	MOV EAX, 0
+	CLD
+@ReadPixel:
+	LODSB
+	.if AL == ","
+	CALL Crlf
+	.ELSEIF AL == ";"
+	CALL Crlf
+	CALL Crlf
+	.ELSEIF AL == "#"
+	CALL Crlf
+	CALL Crlf
+	CALL Crlf
+	.ELSE
+	CALL ReadColorValue
+	SUB ECX,3
+	CALL WriteDec
+	CMP ECX, 0
+	JLE @Finish
+	.ENDIF
+
+	LOOP @ReadPixel
+@Finish:
+RET
+ReadPixelValue ENDP
 
 main PROC
 
-	;CALL OpenFileForReading
+	CALL LoadFileData
+	CALL WaitMsg
+	CALL WaitMsg
+	CALL Crlf
+	CALL ReadPixelValue
 
 ;#region Encode Testing
-;COMMENT @
+COMMENT @
 MOV BL, 'b'
 MOV EDX, OFFSET colors
 CALL Encode_Char
@@ -135,13 +214,36 @@ mov al, ' '
 call WriteChar
 INC ESI
 loop l2
-;@
+
 ;#endregion
 call WaitMsg
 CALL Crlf
 CALL Decode_Char
 CALL Crlf
+@
 CALL WaitMsg
 exit
 main ENDP
 END main
+
+COMMENT @DLL Setup
+
+DecodeTextMessage PROC imgeData:BYTE
+
+
+RET
+DecodeTextMessage ENDP
+
+EncodeTextMessage PROC msg:BYTE, imgData:BYTE
+	
+
+
+	RET
+EncodeTextMessage ENDP
+
+DllMain PROC hInstance:DWORD, fdwReason:DWORD, lpReserved:DWORD
+mov eax, 1 ; Return true to caller.
+ret
+DllMain ENDP
+END DllMain
+@
