@@ -14,8 +14,8 @@ namespace Image_Text_Steganography_UI_Module
         public Pixel(string[] rgbStrings)
         {
             R = Convert.ToByte(rgbStrings[0]);
-            B = Convert.ToByte(rgbStrings[1]);
-            G = Convert.ToByte(rgbStrings[2]);
+            G = Convert.ToByte(rgbStrings[1]);
+            B = Convert.ToByte(rgbStrings[2]);
         }
 
         public Color GetColor()

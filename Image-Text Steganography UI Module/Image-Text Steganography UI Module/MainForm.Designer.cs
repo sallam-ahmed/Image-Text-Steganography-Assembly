@@ -58,6 +58,8 @@
             this.textBox3 = new System.Windows.Forms.TextBox();
             this.openFileDg = new System.Windows.Forms.OpenFileDialog();
             this.saveFileDg = new System.Windows.Forms.SaveFileDialog();
+            this.encryptionKeyTextBox = new System.Windows.Forms.TextBox();
+            this.label7 = new System.Windows.Forms.Label();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
@@ -139,6 +141,8 @@
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.label7);
+            this.groupBox1.Controls.Add(this.encryptionKeyTextBox);
             this.groupBox1.Controls.Add(this.label3);
             this.groupBox1.Controls.Add(this.encOutputPathTxtBox);
             this.groupBox1.Controls.Add(this.encryptionBtn);
@@ -249,6 +253,7 @@
             this.label5.Size = new System.Drawing.Size(30, 17);
             this.label5.TabIndex = 9;
             this.label5.Text = "Old";
+            this.label5.Click += new System.EventHandler(this.label5_Click);
             // 
             // label4
             // 
@@ -264,6 +269,7 @@
             this.newImagePictureBox.Location = new System.Drawing.Point(9, 31);
             this.newImagePictureBox.Name = "newImagePictureBox";
             this.newImagePictureBox.Size = new System.Drawing.Size(256, 256);
+            this.newImagePictureBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.newImagePictureBox.TabIndex = 6;
             this.newImagePictureBox.TabStop = false;
             // 
@@ -272,7 +278,7 @@
             this.oldImagePictureBox.Location = new System.Drawing.Point(337, 31);
             this.oldImagePictureBox.Name = "oldImagePictureBox";
             this.oldImagePictureBox.Size = new System.Drawing.Size(256, 256);
-            this.oldImagePictureBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
+            this.oldImagePictureBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.oldImagePictureBox.TabIndex = 6;
             this.oldImagePictureBox.TabStop = false;
             // 
@@ -379,6 +385,24 @@
             // 
             this.openFileDg.FileName = "openFileDialog1";
             // 
+            // encryptionKeyTextBox
+            // 
+            this.encryptionKeyTextBox.Location = new System.Drawing.Point(116, 298);
+            this.encryptionKeyTextBox.Name = "encryptionKeyTextBox";
+            this.encryptionKeyTextBox.ReadOnly = true;
+            this.encryptionKeyTextBox.Size = new System.Drawing.Size(219, 22);
+            this.encryptionKeyTextBox.TabIndex = 8;
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(12, 301);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(32, 17);
+            this.label7.TabIndex = 9;
+            this.label7.Tag = "";
+            this.label7.Text = "Key";
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -450,6 +474,8 @@
         private System.Windows.Forms.TextBox encOutputPathTxtBox;
         private System.Windows.Forms.OpenFileDialog openFileDg;
         private System.Windows.Forms.SaveFileDialog saveFileDg;
+        private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.TextBox encryptionKeyTextBox;
     }
 }
 
