@@ -74,36 +74,37 @@ namespace Image_Text_Steganography_UI_Module
                 for (int j = 0; j < inputEncryptionBitmap.Height; j++)
                 {
                     var pixel = inputEncryptionBitmap.GetPixel(i, j);
-                    writer.Write($"{pixel.R},{pixel.G},{pixel.B};");
+                    writer.Write($"{pixel.R}{pixel.G}{pixel.B}");
                     
                 }
-                writer.Write("\n");
             }
             writer.Flush();
             writer.Close();
             MessageBox.Show("Done.");
         }
+        //TODO Implement New Decoding Method
         private  void DecodePixels(List<string>pixelsList,int imageWidth , int imageHeight)
         {
             //List<List<Pixel>> image =new List<List<Pixel>>();
 
-            Bitmap decodedBitmap = new Bitmap(imageWidth,imageHeight);
+            //Bitmap decodedBitmap = new Bitmap(imageWidth,imageHeight);
 
-            for (int i = 0; i < imageWidth; i++)
-            {
-                var imgWidthData = pixelsList[i]; //P1,P2,P3,P4
-                var pixels = imgWidthData.Split(";".ToCharArray(), StringSplitOptions.RemoveEmptyEntries); // Pixel(R,G,B)
-                for (int j = 0; j < imageHeight; j++)
-                {
-                    var pixelData = new Pixel(pixels[j].Split(',')); //RGB
-                    //  image[i][j] = pixelData;
-                    decodedBitmap.SetPixel(i, j, pixelData.GetColor());
-                }
-            }
+            //for (int i = 0; i < imageWidth; i++)
+            //{
+            //    var imgWidthData = pixelsList[i]; //P1,P2,P3,P4
+            //    var pixels = imgWidthData.Split(";".ToCharArray(), StringSplitOptions.RemoveEmptyEntries); // Pixel(R,G,B)
+            //    for (int j = 0; j < imageHeight; j++)
+            //    {
+            //        var pixelData = new Pixel(pixels[j].Split(',')); //RGB
+            //        //  image[i][j] = pixelData;
+            //        decodedBitmap.SetPixel(i, j, pixelData.GetColor());
+            //    }
+            //}
 
-            newImagePictureBox.Image = decodedBitmap;
+            //newImagePictureBox.Image = decodedBitmap;
 
-            MessageBox.Show("Done.");
+            //MessageBox.Show("Done.");
+            throw new NotImplementedException("Function not impelmented because of new decoding system.");
         }
 
         private void label5_Click(object sender, EventArgs e)
