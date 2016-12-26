@@ -7,14 +7,17 @@ orConst EQU 00000001B
 Massage BYTE 1000 DUP(?)
 Massage_length DWORD ?
 SNUM BYTE 3 DUP(?)
+mEncCount BYTE 0
+STCounter BYTE 0
 
 ;#region FileRead Data
 	BUFFER_SIZE EQU 500000
 	BUFFER_LENGTH DWORD ?
-	FilePath BYTE "C:\Users\Abdelrhman_Hassan\Desktop\New Text Document.txt",0
+	FilePath BYTE "E:\input2.txt",0
 	FileHandler HANDLE ?
 	INPUT_BUFFER BYTE BUFFER_SIZE DUP(?)
 	INVALIDE_HANDLER_MESSAGE BYTE "Invalid Handler for input file...",0
+	INPUT_BUFFER_NEW BYTE BUFFER_SIZE DUP(?)
 ;#endregion
 
 
@@ -44,56 +47,69 @@ Encode_Char PROC USES ECX ESI EBX EAX EDX
 @ENCODE_MASSLOOP:
      PUSH ECX
 	 MOV EAX , 0
-	  
 	 MOV BL ,[EDI]
 	 MOV ECX , 8
 @ENCODE_CHARLOOP:
      PUSH ECX 
 	 MOV ECX ,3
 	 CALL ParseDecimal32
-	SHL BL, 1         ; transfer MSB in carry once
-	JC @encORING
+	 SHL BL, 1         ; transfer MSB in carry once
+	 JC @encORING
 	; clearnig
-	AND AL , andConst
-	JMP @ecFinal
+	 AND AL , andConst
+	 JMP @ecFinal
 
 @encORING:
 	OR AL , orConst
 @ecFinal:
-    CALL WRITEDEC 
-	CALL CRLF
-;=================================
-	PUSH EDX
-	PUSH EBX
+    CALL WriteDec 
+	INC mEncCount
+	CALL Crlf
+	;=================================
+		PUSHAD
+	;Num is in EAX
 	;PUSH ECX 
 	;PUSH EAX
 	MOV ECX , 3
 	MOV EBX , 10
 	TOSTRING:
-	    MOV EDX , 0
-		DIV EBX 
-		ADD EDX , 48
-		PUSH EDX
+	    MOV EDX , 0 ; Clear End
+		DIV EBX ; Div by 10
+		ADD EDX , 48 ; Convert to ascii equivalent
+		PUSH EDX ; Push to stack
+		INC STCounter
+		CMP EAX, 0
+		JE @ExitTOSTRING
 	LOOP TOSTRING
-	MOV ECX , 3
+@ExitTOSTRING:
+	MOVZX ECX , STCounter
 	TOSTRING1:
-		POP EDX
-		MOV [ESI] ,EDX 
+		POP [ESI]
 		INC ESI
-	LOOP TOSTRING1
-;
-	;POP EAX
-	;POP ECX
-	POP EBX 
-	POP EDX
+		LOOP TOSTRING1
+
+	POPAD
 ;================================
+	ADD ESI, 4
 	ADD EDX , 4
 	POP ECX 
+	MOV STCounter, 0
 LOOP @ENCODE_CHARLOOP
 	INC EDI
-    CALL CRLF 
+    CALL Crlf 
 	POP ECX 
 LOOP @ENCODE_MASSLOOP
+
+;TODO Remove
+	CALL Crlf
+	MOV EAX,lightBlue
+	CALL SetTextColor
+	MOVZX EAX,mEncCount
+	CALL WriteInt
+	MOV EAX,white
+	CALL SetTextColor
+	CALL WaitMsg
+;==================================================
 RET
 Encode_Char ENDP
 
@@ -181,18 +197,27 @@ main PROC
 
 	CALL OpenFileForReading
 
-;#region Encode Testing
-;COMMENT @
-MOV EDX , OFFSET Massage 
-MOV ECX , LENGTHOF Massage 
-call READString
-MOV Massage_length , EAX
-CALL Encode_Char
-MOV EDX , OFFSET INPUT_BUFFER
-CALL WRITESTRING 
-;CALL Decode_Char
-call WaitMsg
-CALL Crlf
+	;#region Encode Testing
+	;COMMENT @
+	CALL WaitMsg
+	MOV EDX , OFFSET Massage 
+	MOV ECX , LENGTHOF Massage 
+	call ReadString
+
+	MOV Massage_length , EAX
+	CALL Encode_Char
+	MOV EAX,lightGreen
+	CALL SetTextColor
+	MOV EDX , OFFSET INPUT_BUFFER
+	CALL WriteString 
+	CALL WaitMsg
+	MOV EAX, lightBlue
+	CALL SetTextColor
+	MOV EDX,OFFSET INPUT_BUFFER_NEW
+	CALL ReadString
+	;CALL Decode_Char
+	call WaitMsg
+	CALL Crlf
 exit
 main ENDP
 END main
