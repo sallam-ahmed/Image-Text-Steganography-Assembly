@@ -2,25 +2,32 @@
 INCLUDE Irvine32.inc
 INCLUDE Macros.inc
 .data
-colors byte  100, 1, 2, 3, 4, 5, 6, 7
-andConst EQU 11111110H
-orConst EQU 00000001H
+andConst EQU 11111110B
+orConst EQU 00000001B
 Massage BYTE 1000 DUP(?)
-Massage_length BYTE ?
-SNUM DWORD 1000 DUP(?)
+Massage_length DWORD ?
+SNUM BYTE 3 DUP(?)
+
 ;#region FileRead Data
-	BUFFER_SIZE EQU 5000
-	
-	FilePath BYTE "E:\input.txt",0
+	BUFFER_SIZE EQU 500000
+	BUFFER_LENGTH DWORD ?
+	FilePath BYTE "C:\Users\Abdelrhman_Hassan\Desktop\New Text Document.txt",0
 	FileHandler HANDLE ?
 	INPUT_BUFFER BYTE BUFFER_SIZE DUP(?)
-
 	INVALIDE_HANDLER_MESSAGE BYTE "Invalid Handler for input file...",0
 ;#endregion
 
 
 
 .code
+;=========================Encode Character Procedure ========================
+;INTTOSTRING PROC USES EAX ECX EBX EDX
+    ;MOV ESI, SNUM
+	;
+;
+	;RET
+;INTTOSTRING ENDP
+;
 ;=========================Encode Character Procedure =========================
 ; EDX Contains offset of colors 8 count array
 ;
@@ -31,41 +38,60 @@ Encode_Char PROC USES ECX ESI EBX EAX EDX
 	
 	MOV EDI , OFFSET Massage 
 	MOV ECX , Massage_length;Number of bits
-	MOV ESI , OFFSET BUFFER
-	;MOV EBX , OFFSET SNUM
+	MOV EDX , OFFSET INPUT_BUFFER
+	MOV ESI, OFFSET INPUT_BUFFER
 
 @ENCODE_MASSLOOP:
      PUSH ECX
+	 MOV EAX , 0
+	  
 	 MOV BL ,[EDI]
 	 MOV ECX , 8
 @ENCODE_CHARLOOP:
      PUSH ECX 
-	 MOV EDX , ESI
 	 MOV ECX ,3
 	 CALL ParseDecimal32
-	 
-	SHL BL, 1; transfer MSB in carry once
+	SHL BL, 1         ; transfer MSB in carry once
 	JC @encORING
 	; clearnig
-	AND EAX , andConst
+	AND AL , andConst
 	JMP @ecFinal
 
 @encORING:
-	OR EAX , orConst
+	OR AL , orConst
 @ecFinal:
-    CALL WRITEDEC
-	
-	
-	
-	
-	
-	
-	 
+    CALL WRITEDEC 
+	CALL CRLF
+;=================================
+	PUSH EDX
+	PUSH EBX
+	;PUSH ECX 
+	;PUSH EAX
+	MOV ECX , 3
+	MOV EBX , 10
+	TOSTRING:
+	    MOV EDX , 0
+		DIV EBX 
+		ADD EDX , 48
+		PUSH EDX
+	LOOP TOSTRING
+	MOV ECX , 3
+	TOSTRING1:
+		POP EDX
+		MOV [ESI] ,EDX 
+		INC ESI
+	LOOP TOSTRING1
+;
+	;POP EAX
+	;POP ECX
+	POP EBX 
+	POP EDX
+;================================
+	ADD EDX , 4
 	POP ECX 
-	LOOP @ENCODE_CHARLOOP
-    
-   	ADD ESI , 3
+LOOP @ENCODE_CHARLOOP
 	INC EDI
+    CALL CRLF 
 	POP ECX 
 LOOP @ENCODE_MASSLOOP
 RET
@@ -78,20 +104,35 @@ Encode_Char ENDP
 ;
 ;EAX = Decoded Character
 Decode_Char PROC USES ECX ESI EAX EDX
-	MOV ECX, 8
-	MOV ESI,EDX
-	MOV EAX,0
+	
+	MOV ECX , BUFFER_LENGTH
+	SHR ECX ,5
+	MOV EDX ,OFFSET INPUT_BUFFER
+	MOV EAX ,0
+	MOV EBX ,0
+@decCode_LOOP:
+	 PUSH ECX 
+	 MOV EBX , 0
+	 MOV ECX , 8  
 @decBegin:
-	AND BYTE PTR [ESI], 00000001b
-	ADD AL, BYTE PTR[ESI]
+    PUSH ECX 
+	MOV ECX , 3
+    CALL ParseDecimal32
+	AND AL, orConst
+	ADD BL, AL
+	POP ECX 
 	CMP ECX,1
 	JE @decIgnore
 @decShift:
-	SHL AL,1
-	INC ESI
-@decIgnore:
+	SHL BL,1
+@decIgnore: 
+	ADD EDX,4
 	LOOP @decBegin
+	MOV AL ,BL
 	CALL WriteChar
+	POP ECX 
+	LOOP @decCode_LOOP
+	
 RET
 Decode_Char ENDP
 
@@ -108,6 +149,7 @@ OpenFileForReading PROC USES EDX ECX EAX
 	MOV EDX, OFFSET INPUT_BUFFER
 	MOV ECX, BUFFER_SIZE
 	CALL ReadFromFile
+	MOV BUFFER_LENGTH, EAX 
 	JNC @CHECK_BUFFER_SIZE; error reading ?
 	mWrite "Error reading file. "; yes: show error message
 	CALL WriteWindowsMsg
@@ -129,15 +171,15 @@ OpenFileForReading PROC USES EDX ECX EAX
 	CALL Crlf
 	CALL WaitMsg
 @READ_FINAL:
-	MOV EDX,OFFSET INPUT_BUFFER
-	CALL WriteString
+	;MOV EDX,OFFSET INPUT_BUFFER
+	;CALL WriteString
 @TERMINATE:
 	RET
 OpenFileForReading ENDP
 
 main PROC
 
-	;CALL OpenFileForReading
+	CALL OpenFileForReading
 
 ;#region Encode Testing
 ;COMMENT @
@@ -145,27 +187,12 @@ MOV EDX , OFFSET Massage
 MOV ECX , LENGTHOF Massage 
 call READString
 MOV Massage_length , EAX
-;MOV BL, 'b'
-;MOV EDX, OFFSET colors
 CALL Encode_Char
-
- 
-;mov ecx, 8
-;mov ESI, offset colors
-;l2:
-;mov eax, 0
-;MOV al, [ESI]
-;call WriteDec
-;
-;mov al, ' '
-;call WriteChar
-;INC ESI
-;loop l2
-;@
-;#endregion
+MOV EDX , OFFSET INPUT_BUFFER
+CALL WRITESTRING 
+;CALL Decode_Char
 call WaitMsg
 CALL Crlf
-;CALL Decode_Char
 exit
 main ENDP
 END main
